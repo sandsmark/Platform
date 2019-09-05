@@ -57,7 +57,7 @@ public:
 class Ident : public FileIo<Ident>
 {
 private:
-   char value[4];
+   char value[5];
 
 public:
    Ident(const std::string& value_ = "    ")
