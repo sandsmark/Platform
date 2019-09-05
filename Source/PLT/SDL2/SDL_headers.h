@@ -28,8 +28,8 @@
 #pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 
-#include "SDL.h"
-#include "SDL_audio.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_audio.h>
 
 #ifdef __clang__
 #pragma clang diagnostic pop

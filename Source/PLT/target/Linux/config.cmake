@@ -47,8 +47,5 @@ set(PLT_source
     Platform/Source/PLT/POSIX/Socket.cpp)
 
 find_package(SDL2 REQUIRED)
-string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES) # avoid bug in SDL2 .cmake module
 
-include_directories(${SDL2_INCLUDE_DIRS})
-
-set(PLT_libs ${SDL2_LIBRARIES} pthread)
+set(PLT_libs SDL2::SDL2 pthread)
