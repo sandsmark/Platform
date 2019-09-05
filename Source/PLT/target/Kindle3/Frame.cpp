@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <mxcfb.h>
 
 #include <algorithm>
 
@@ -46,7 +47,6 @@ private:
    unsigned height{800};
    unsigned pitch{300};
    uint8_t* buffer{nullptr};
-   int      refresh_fd{-1};
 
    size_t getSize() const { return pitch * height; }
 
@@ -77,10 +77,10 @@ private:
 public:
    Impl()
    {
-      int fd = openDev("/dev/fb0");
+      display_fd = openDev("/dev/fb0");
 
       struct fb_var_screeninfo screeninfo;
-      int                      status = ioctl(fd, FBIOGET_VSCREENINFO, &screeninfo);
+      int                      status = ioctl(display_fd, FBIOGET_VSCREENINFO, &screeninfo);
       if(-1 == status)
       {
          error("ioctl(.. FBIOGET_VSCREENINFO) failed");
@@ -90,21 +90,17 @@ public:
       height = screeninfo.yres;
       pitch  = (width + 1)/2;
 
-      buffer = (uint8_t*)mmap(nullptr, getSize(), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+      buffer = (uint8_t*)mmap(nullptr, getSize(), PROT_READ | PROT_WRITE, MAP_SHARED, display_fd, 0);
       if(nullptr == buffer)
       {
          error("mmap() failed");
       }
-
-      close(fd);
-
-      refresh_fd = openDev("/proc/eink_fb/update_display");
    }
 
    ~Impl()
    {
       munmap(buffer, getSize());
-      close(refresh_fd);
+      close(display_fd);
    }
 
    unsigned getWidth() const { return width; }
@@ -119,7 +115,17 @@ public:
 
    void refresh() const
    {
-      (void)write(refresh_fd, "2", 1);
+       mxcfb_update_data data;
+       data.update_region.left = 0;
+       data.update_region.top = 0;
+       data.update_region.width = width;
+       data.update_region.height = height;
+       data.temp = TEMP_USE_AMBIENT;
+       data.update_marker = 0;
+       data.update_mode = UPDATE_MODE_PARTIAL;
+       data.flags = 0;
+       data.waveform_mode = 6; // A2, fast mono
+       ioctl(display_fd, MXCFB_SEND_UPDATE, &data);
    }
 };
 
